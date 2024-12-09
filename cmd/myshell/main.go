@@ -11,21 +11,26 @@ import (
 var _ = fmt.Fprint
 
 func main() {
-	// Uncomment this block to pass the first stage
+
+	// Wrap the input reader in a bufio.Reader
+	reader := bufio.NewReader(os.Stdin)
 	
-	// Wait for user input
+	// REPL loop
 	for {
-		// Print '$' to emulate shell prompt
 		fmt.Fprint(os.Stdout, "$ ")
 
-		// Wait for user input
-		input, _ := bufio.NewReader(os.Stdin).ReadString('\n')
+		input, _ := reader.ReadString('\n')
 
 		// Remove trailing newline
 		input = strings.TrimSuffix(input, "\n")
 
-		// Print the input back to the user
-		fmt.Printf("%v: not found\n", input)
+		// Handle exit command
+		switch input {
+			case "exit 0":
+				os.Exit(0)
+			default:
+				fmt.Printf("%v: not found\n", input)
+		}
 	}
 
 }
