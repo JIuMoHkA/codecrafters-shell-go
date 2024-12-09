@@ -21,13 +21,25 @@ func main() {
 
 		input, _ := reader.ReadString('\n')
 
-		// Remove trailing newline
 		input = strings.TrimSuffix(input, "\n")
+		parts := strings.Fields(input)
+
+		cmd := parts[0]
+
+
+		
 
 		// Handle exit command
-		switch input {
-			case "exit 0":
-				os.Exit(0)
+		switch cmd{
+			case "exit" :
+				if len(parts) > 1 && parts[1] == "0" {
+					os.Exit(0)
+				} else {
+					fmt.Printf("%v: not found\n", input)
+				}
+			case "echo":
+				fmt.Println(strings.Join(parts[1:], " "))
+
 			default:
 				fmt.Printf("%v: not found\n", input)
 		}
