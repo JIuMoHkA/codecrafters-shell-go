@@ -12,14 +12,20 @@ var _ = fmt.Fprint
 
 func main() {
 	// Uncomment this block to pass the first stage
-	fmt.Fprint(os.Stdout, "$ ")
-
+	
 	// Wait for user input
-	input, _ := bufio.NewReader(os.Stdin).ReadString('\n')
+	for {
+		// Print '$' to emulate shell prompt
+		fmt.Fprint(os.Stdout, "$ ")
 
-	input = strings.TrimSuffix(input, "\n")
+		// Wait for user input
+		input, _ := bufio.NewReader(os.Stdin).ReadString('\n')
 
-	err_string := fmt.Sprintf("%v: not found\n", input)
-	fmt.Fprint(os.Stdout, err_string)
+		// Remove trailing newline
+		input = strings.TrimSuffix(input, "\n")
+
+		// Print the input back to the user
+		fmt.Printf("%v: not found\n", input)
+	}
 
 }
