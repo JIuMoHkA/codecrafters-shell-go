@@ -41,7 +41,7 @@ func main() {
 
 	// Wrap the input reader in a bufio.Reader
 	reader := bufio.NewReader(os.Stdin)
-	builtinCommands := []string{"echo", "type", "exit"}
+	builtinCommands := []string{"echo", "type", "exit", "pwd"}
 	
 	// REPL loop
 	for {
@@ -72,7 +72,14 @@ func main() {
 				} else {
 					fmt.Printf("%v: not found\n", parts[1])
 				}
+			case "pwd":
+				dir, err := os.Getwd()
+				if err != nil {
+					fmt.Println("Error getting current directory:", err)
+				} else {
+					fmt.Println(dir)
 
+				}
 			default:
 				_, isExists := commandInPath(cmd)
 
