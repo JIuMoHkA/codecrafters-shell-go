@@ -8,8 +8,6 @@ import (
 	"strconv"
 )
 
-// Ensures gofmt doesn't remove the "fmt" import in stage 1 (feel free to remove this!)
-var _ = fmt.Fprint
 
 // Function to check if word is in slice
 func contains(slice []string, word string) bool {
@@ -19,6 +17,22 @@ func contains(slice []string, word string) bool {
 		}
 	}
 	return false
+}
+
+
+// Function to check if command is in path
+func commandInPath(command string) (string, bool) {
+	pathEnv := os.Getenv("PATH")
+	path := strings.Split(pathEnv, ":")
+
+	for _, dir := range path {
+		fullPath := dir + "/" + command
+
+		if fileInfo, err := os.Stat(fullPath); (err == nil) && (fileInfo.Mode().IsRegular()) {
+			return fullPath, true
+		}
+	}
+	return "", false	
 }
 
 
@@ -43,7 +57,7 @@ func main() {
 		switch cmd{
 			case "exit" :
 				flg, err := strconv.Atoi(parts[1])
-				if err!= nil {
+				if err != nil {
 					flg = 1
 				}
 				os.Exit(flg)
@@ -53,6 +67,8 @@ func main() {
 			case "type":
 				if contains(builtinCommands, parts[1]) {
 					fmt.Println(parts[1] + " is a shell builtin")
+				} else if filePath, isExists := commandInPath(parts[1]); isExists {
+					fmt.Println(parts[1] + " is " + filePath)
 				} else {
 					fmt.Printf("%v: not found\n", parts[1])
 				}
@@ -62,4 +78,6 @@ func main() {
 		}
 	}
 
+
+	
 }
