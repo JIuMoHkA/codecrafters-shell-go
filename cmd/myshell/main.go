@@ -41,7 +41,7 @@ func main() {
 
 	// Wrap the input reader in a bufio.Reader
 	reader := bufio.NewReader(os.Stdin)
-	builtinCommands := []string{"echo", "type", "exit", "pwd"}
+	builtinCommands := []string{"echo", "type", "exit", "pwd", "cd"}
 	
 	// REPL loop
 	for {
@@ -79,6 +79,12 @@ func main() {
 				} else {
 					fmt.Println(dir)
 
+				}
+			case "cd":
+				err := os.Chdir(parts[1])
+				
+				if err != nil {
+					fmt.Printf("cd: %v: No such file or directory\n", parts[1])
 				}
 			default:
 				_, isExists := commandInPath(cmd)
