@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 	"strconv"
+	"os/exec"
 )
 
 
@@ -47,7 +48,6 @@ func main() {
 		fmt.Fprint(os.Stdout, "$ ")
 
 		input, _ := reader.ReadString('\n')
-
 		input = strings.TrimSuffix(input, "\n")
 		parts := strings.Fields(input)
 
@@ -74,10 +74,19 @@ func main() {
 				}
 
 			default:
-				fmt.Printf("%v: not found\n", input)
+				_, isExists := commandInPath(cmd)
+
+				if !isExists {
+					fmt.Printf("%v: not found\n", input)
+					continue
+				}
+
+				command := exec.Command(cmd, parts[1:]...)
+
+				command.Stdout = os.Stdout
+				command.Stderr = os.Stderr
+
+				command.Run()
 		}
 	}
-
-
-	
 }
