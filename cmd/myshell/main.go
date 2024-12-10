@@ -81,8 +81,13 @@ func main() {
 
 				}
 			case "cd":
-				err := os.Chdir(parts[1])
+				path := parts[1]
+				if path == "~" {
+					path = os.Getenv("HOME")
+				}
 				
+				err := os.Chdir(path)
+
 				if err != nil {
 					fmt.Printf("cd: %v: No such file or directory\n", parts[1])
 				}
