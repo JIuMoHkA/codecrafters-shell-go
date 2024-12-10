@@ -7,6 +7,7 @@ import (
 	"strings"
 	"strconv"
 	"os/exec"
+	"unicode"
 )
 
 
@@ -36,6 +37,37 @@ func commandInPath(command string) (string, bool) {
 	return "", false	
 }
 
+func parseInput(input string) []string {
+	var result []string
+	var curElement strings.Builder
+	var isQuoted bool = false
+
+	for _, r := range input {
+		switch {
+		case r == '\'':
+			isQuoted =!isQuoted
+		case unicode.IsSpace(r):
+			if ! isQuoted {
+				if curElement.Len() > 0 {
+					result = append(result, curElement.String())
+					curElement.Reset()
+				}
+			} else {
+				curElement.WriteRune(r)
+			}
+		
+		default:
+			curElement.WriteRune(r)
+		}
+	}
+	if curElement.Len() > 0 {
+		result = append(result, curElement.String())
+		curElement.Reset()
+	}
+
+	return result
+}
+
 
 func main() {
 
@@ -48,8 +80,10 @@ func main() {
 		fmt.Fprint(os.Stdout, "$ ")
 
 		input, _ := reader.ReadString('\n')
+
 		input = strings.TrimSuffix(input, "\n")
-		parts := strings.Fields(input)
+		// parts := strings.Fields(input)
+		parts := parseInput(input)
 
 		cmd := parts[0]
 
