@@ -164,10 +164,7 @@ func parseInput(input string) []string {
 				curResult.WriteRune(r)
 			}
 		default:
-			// curResult.WriteRune(r)
-			if prevRune == '\\' {
-
-			}
+			curResult.WriteRune(r)
 		}
 
 		prevRune = r
