@@ -35,38 +35,33 @@ func commandInPath(command string) (string, bool) {
 	return "", false
 }
 
-// Function to handle escape sequences inside double quotes
-func handleEscapeSequences(input string) string {
-	var result strings.Builder
-
-	inEscape := false
-	for _, r := range input {
-		if inEscape {
-			// Handle escape sequences
-			switch r {
-			case 'n':
-				result.WriteRune('\n') // newline
-			case 't':
-				result.WriteRune('\t') // tab
-			case '\\':
-				result.WriteRune('\\') // backslash
-			case '"':
-				result.WriteRune('"') // double quote
-			case '$':
-				result.WriteRune('"') // dollar sign
-			default:
-				// If it's not a recognized escape sequence, keep the original
-				result.WriteRune(r)
-			}
-			inEscape = false
-		} else if r == '\\' {
-			inEscape = true // Start escape sequence
-		} else {
-			result.WriteRune(r)
-		}
-	}
-	return result.String()
-}
+// 	for _, r := range input {
+// 		if inEscape {
+// 			// Handle escape sequences
+// 			switch r {
+// 			case 'n':
+// 				result.WriteRune('\n') // newline
+// 			case 't':
+// 				result.WriteRune('\t') // tab
+// 			case '\\':
+// 				result.WriteRune('\\') // backslash
+// 			case '"':
+// 				result.WriteRune('"') // double quote
+// 			case '$':
+// 				result.WriteRune('"') // dollar sign
+// 			default:
+// 				// If it's not a recognized escape sequence, keep the original
+// 				result.WriteRune(r)
+// 			}
+// 			inEscape = false
+// 		} else if r == '\\' {
+// 			inEscape = true // Start escape sequence
+// 		} else {
+// 			result.WriteRune(r)
+// 		}
+// 	}
+// 	return result.String()
+// }
 
 // Function to expand environment variables
 func expandVariables(input string) string {
@@ -104,10 +99,28 @@ func expandVariables(input string) string {
 	return result.String()
 }
 
+func handeEscapeCharacters(input string) string {
+	var result strings.Builder
+	var prevRune rune
+
+	for _, r := range input {
+		if r == '\\' {
+			if prevRune == '\\' {
+				result.WriteRune('\\')
+			}
+		} else {
+			result.WriteRune(r)
+		}
+		prevRune = r
+	}
+	return result.String()
+}
+
 func parseInput(input string) []string {
 	var result []string
-	var curElement strings.Builder
+	var curResult strings.Builder
 	var isSingleQuoted, isDoubleQuoted = false, false
+	var prevRune rune
 
 	for _, r := range input {
 		switch {
@@ -115,38 +128,44 @@ func parseInput(input string) []string {
 			if !isDoubleQuoted {
 				isSingleQuoted = !isSingleQuoted
 			} else {
-				curElement.WriteRune(r)
+				curResult.WriteRune(r)
 			}
 		case r == '"':
 			if !isSingleQuoted {
 				isDoubleQuoted = !isDoubleQuoted
-				if !isDoubleQuoted {
-					part := handleEscapeSequences(curElement.String())
-					part = expandVariables(part)
-					result = append(result, part)
-					curElement.Reset()
-				}
 			} else {
-				curElement.WriteRune(r)
+				curResult.WriteRune(r)
 			}
-		case unicode.IsSpace(r):
-			if !isSingleQuoted && !isDoubleQuoted {
-				if curElement.Len() > 0 {
-					result = append(result, curElement.String())
-					curElement.Reset()
+		case r == '\\':
+			if isSingleQuoted {
+				curResult.WriteRune(r)
+			} else if isDoubleQuoted {
+				if prevRune != '\\' {
+					curResult.WriteRune(r)
 				}
-			} else {
-				curElement.WriteRune(r)
 			}
 
+		case unicode.IsSpace(r):
+			if !isSingleQuoted && !isDoubleQuoted {
+				if prevRune == '\\' {
+					curResult.WriteRune(r)
+				} else if curResult.Len() > 0 {
+					result = append(result, curResult.String())
+					curResult.Reset()
+				}
+			} else {
+				curResult.WriteRune(r)
+			}
 		default:
-			curElement.WriteRune(r)
+			curResult.WriteRune(r)
 		}
+
+		prevRune = r
 	}
-	if curElement.Len() > 0 {
-		part := curElement.String()
+	if curResult.Len() > 0 {
+		part := curResult.String()
 		if isDoubleQuoted {
-			part = handleEscapeSequences(part)
+			part = handeEscapeCharacters(part)
 			part = expandVariables(part)
 		}
 		result = append(result, part)
@@ -166,9 +185,11 @@ func main() {
 		fmt.Fprint(os.Stdout, "$ ")
 
 		input, _ := reader.ReadString('\n')
+		if len(input) == 1 {
+			continue
+		}
 
 		input = strings.TrimSuffix(input, "\n")
-		// parts := strings.Fields(input)
 		parts := parseInput(input)
 
 		cmd := parts[0]

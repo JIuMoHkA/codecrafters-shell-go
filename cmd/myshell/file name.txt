@@ -1,1 +1,50 @@
-filename1
+func parseInput(input string) []string {
+	var result []string
+	var curElement strings.Builder
+	var isSingleQuoted, isDoubleQuoted = false, false
+
+	for _, r := range input {
+		switch {
+		case r == '\'':
+			if !isDoubleQuoted {
+				isSingleQuoted = !isSingleQuoted
+			} else {
+				curElement.WriteRune(r)
+			}
+		case r == '"':
+			if !isSingleQuoted {
+				isDoubleQuoted = !isDoubleQuoted
+				if !isDoubleQuoted {
+					part := handeEscapeCharacters(curElement.String())
+					part = expandVariables(part)
+					result = append(result, part)
+					curElement.Reset()
+				}
+			} else {
+				curElement.WriteRune(r)
+			}
+		case unicode.IsSpace(r):
+			if !isSingleQuoted && !isDoubleQuoted {
+				if curElement.Len() > 0 {
+					result = append(result, curElement.String())
+					curElement.Reset()
+				}
+			} else {
+				curElement.WriteRune(r)
+			}
+
+		default:
+			curElement.WriteRune(r)
+		}
+	}
+	if curElement.Len() > 0 {
+		part := curElement.String()
+		if isDoubleQuoted {
+			part = handeEscapeCharacters(part)
+			part = expandVariables(part)
+		}
+		result = append(result, part)
+	}
+
+	return result
+}
