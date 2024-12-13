@@ -125,14 +125,22 @@ func parseInput(input string) []string {
 	for _, r := range input {
 		switch {
 		case r == '\'':
-			if !isDoubleQuoted {
-				isSingleQuoted = !isSingleQuoted
+			if prevRune != '\\' {
+				if !isDoubleQuoted {
+					isSingleQuoted = !isSingleQuoted
+				} else {
+					curResult.WriteRune(r)
+				}
 			} else {
 				curResult.WriteRune(r)
 			}
 		case r == '"':
-			if !isSingleQuoted {
-				isDoubleQuoted = !isDoubleQuoted
+			if prevRune != '\\' {
+				if !isSingleQuoted {
+					isDoubleQuoted = !isDoubleQuoted
+				} else {
+					curResult.WriteRune(r)
+				}
 			} else {
 				curResult.WriteRune(r)
 			}
@@ -144,7 +152,6 @@ func parseInput(input string) []string {
 					curResult.WriteRune(r)
 				}
 			}
-
 		case unicode.IsSpace(r):
 			if !isSingleQuoted && !isDoubleQuoted {
 				if prevRune == '\\' {
@@ -157,7 +164,10 @@ func parseInput(input string) []string {
 				curResult.WriteRune(r)
 			}
 		default:
-			curResult.WriteRune(r)
+			// curResult.WriteRune(r)
+			if prevRune == '\\' {
+
+			}
 		}
 
 		prevRune = r
