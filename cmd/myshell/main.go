@@ -35,34 +35,6 @@ func commandInPath(command string) (string, bool) {
 	return "", false
 }
 
-// 	for _, r := range input {
-// 		if inEscape {
-// 			// Handle escape sequences
-// 			switch r {
-// 			case 'n':
-// 				result.WriteRune('\n') // newline
-// 			case 't':
-// 				result.WriteRune('\t') // tab
-// 			case '\\':
-// 				result.WriteRune('\\') // backslash
-// 			case '"':
-// 				result.WriteRune('"') // double quote
-// 			case '$':
-// 				result.WriteRune('"') // dollar sign
-// 			default:
-// 				// If it's not a recognized escape sequence, keep the original
-// 				result.WriteRune(r)
-// 			}
-// 			inEscape = false
-// 		} else if r == '\\' {
-// 			inEscape = true // Start escape sequence
-// 		} else {
-// 			result.WriteRune(r)
-// 		}
-// 	}
-// 	return result.String()
-// }
-
 // Function to expand environment variables
 func expandVariables(input string) string {
 	var result strings.Builder
@@ -120,43 +92,37 @@ func parseInput(input string) []string {
 	var result []string
 	var curResult strings.Builder
 	var isSingleQuoted, isDoubleQuoted = false, false
-	var prevRune rune
+	escapeFlg := false
 
 	for _, r := range input {
 		switch {
+		case escapeFlg:
+			if isDoubleQuoted && (r != '$' && r != '"' && r != '\\') {
+				curResult.WriteRune('\\')
+			}
+			curResult.WriteRune(r)
+			escapeFlg = false
 		case r == '\'':
-			if prevRune != '\\' {
-				if !isDoubleQuoted {
-					isSingleQuoted = !isSingleQuoted
-				} else {
-					curResult.WriteRune(r)
-				}
+			if !isDoubleQuoted {
+				isSingleQuoted = !isSingleQuoted
 			} else {
 				curResult.WriteRune(r)
 			}
 		case r == '"':
-			if prevRune != '\\' {
-				if !isSingleQuoted {
-					isDoubleQuoted = !isDoubleQuoted
-				} else {
-					curResult.WriteRune(r)
-				}
+			if !isSingleQuoted {
+				isDoubleQuoted = !isDoubleQuoted
 			} else {
 				curResult.WriteRune(r)
 			}
 		case r == '\\':
 			if isSingleQuoted {
 				curResult.WriteRune(r)
-			} else if isDoubleQuoted {
-				if prevRune != '\\' {
-					curResult.WriteRune(r)
-				}
+			} else {
+				escapeFlg = true
 			}
 		case unicode.IsSpace(r):
 			if !isSingleQuoted && !isDoubleQuoted {
-				if prevRune == '\\' {
-					curResult.WriteRune(r)
-				} else if curResult.Len() > 0 {
+				if curResult.Len() > 0 {
 					result = append(result, curResult.String())
 					curResult.Reset()
 				}
@@ -166,9 +132,8 @@ func parseInput(input string) []string {
 		default:
 			curResult.WriteRune(r)
 		}
-
-		prevRune = r
 	}
+
 	if curResult.Len() > 0 {
 		part := curResult.String()
 		if isDoubleQuoted {
