@@ -71,23 +71,6 @@ func expandVariables(input string) string {
 	return result.String()
 }
 
-func handeEscapeCharacters(input string) string {
-	var result strings.Builder
-	var prevRune rune
-
-	for _, r := range input {
-		if r == '\\' {
-			if prevRune == '\\' {
-				result.WriteRune('\\')
-			}
-		} else {
-			result.WriteRune(r)
-		}
-		prevRune = r
-	}
-	return result.String()
-}
-
 func parseInput(input string) []string {
 	var result []string
 	var curResult strings.Builder
@@ -123,7 +106,11 @@ func parseInput(input string) []string {
 		case unicode.IsSpace(r):
 			if !isSingleQuoted && !isDoubleQuoted {
 				if curResult.Len() > 0 {
-					result = append(result, curResult.String())
+					part := curResult.String()
+					if !isSingleQuoted {
+						part = expandVariables(part)
+					}
+					result = append(result, part)
 					curResult.Reset()
 				}
 			} else {
@@ -136,8 +123,7 @@ func parseInput(input string) []string {
 
 	if curResult.Len() > 0 {
 		part := curResult.String()
-		if isDoubleQuoted {
-			part = handeEscapeCharacters(part)
+		if !isSingleQuoted {
 			part = expandVariables(part)
 		}
 		result = append(result, part)
